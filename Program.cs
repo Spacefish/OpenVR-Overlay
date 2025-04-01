@@ -10,4 +10,5 @@ Console.WriteLine("Press any key to exit...");
 Console.Read();
 Console.WriteLine("Exiting...");
 
+overlay.Dispose();
 VR.Shutdown();

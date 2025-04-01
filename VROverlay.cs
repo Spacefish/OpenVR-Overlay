@@ -1,12 +1,21 @@
+using System.Reflection;
+using System.Threading.Tasks;
 using Valve.VR;
 
-public class VROverlay {
+public class VROverlay : IDisposable
+{
     private ulong overlayHandle;
-    private ulong thumbnailHandle;
+    // private ulong thumbnailHandle;
+
+    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+    Task? eventHandlerTask;
 
     private CVROverlay overlay => OpenVR.Overlay;
 
-    public async Task Init() {
+    public void Init() {
+        if(eventHandlerTask != null) {
+            throw new InvalidOperationException("Overlay already initialized.");
+        }
         var response = overlay.CreateOverlay(
             "com.example.overlay",
             "Example Overlay",
@@ -20,16 +29,24 @@ public class VROverlay {
         overlay.SetOverlayWidthInMeters(overlayHandle, 0.2f);
         overlay.SetOverlayInputMethod(overlayHandle, VROverlayInputMethod.Mouse);
 
-        Task.Run(PollEventsTask);
+        eventHandlerTask = Task.Run(PollEventsTask);
 
-        //overlay.SetOverlayColor(overlayHandle, 1.0f, 1.0f, 1.0f);
-        // overlay.SetOverlayAlpha(overlayHandle, 0.5f);
+        SetTestImageOnController();
+    
+        overlay.ShowOverlay(overlayHandle);
+    }
 
+    //todo 
+    private void SetOverlayTexture() {
         var texture = new Texture_t();
         texture.handle = IntPtr.Zero;
         texture.eType = ETextureType.IOSurface;
         texture.eColorSpace = EColorSpace.Auto;
+        overlay.SetOverlayTexture(overlayHandle, ref texture);
+    }
 
+    private void SetTestImageOnController()
+    {
         uint lastControllerId = uint.MaxValue;;
         for(int i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
         {
@@ -42,20 +59,21 @@ public class VROverlay {
             }
         }
 
-        HmdMatrix34_t transform = new HmdMatrix34_t();
-        transform.m0 = 1.0f;
-        transform.m1 = 0.0f;
-        transform.m2 = 0.0f;
-        transform.m3 = 0.0f;
-        transform.m4 = 0.0f;
-        transform.m5 = 1.0f;
-        transform.m6 = 0.0f;
-        transform.m7 = 0.0f;
-        transform.m8 = 0.0f;
-        transform.m9 = 0.0f;
-        transform.m10 = 1.0f;
-        transform.m11 = 0.0f;
-        // overlay.GetOverlayTransformTrackedDeviceRelative(overlayHandle, ref lastControllerId, ref transform);
+        // identity transform
+        HmdMatrix34_t transform = new HmdMatrix34_t() {
+            m0 = 1.0f,
+            m1 = 0.0f,
+            m2 = 0.0f,
+            m3 = 0.0f,
+            m4 = 0.0f,
+            m5 = 1.0f,
+            m6 = 0.0f,
+            m7 = 0.0f,
+            m8 = 0.0f,
+            m9 = 0.0f,
+            m10 = 1.0f,
+            m11 = 0.0f
+        };
         
         var reply = overlay.SetOverlayTransformTrackedDeviceRelative(overlayHandle, lastControllerId, ref transform);
         if(reply != EVROverlayError.None)
@@ -69,12 +87,18 @@ public class VROverlay {
         Console.WriteLine($"Last Controller ID: {lastControllerId} Transform: {transform.m0} {transform.m1} {transform.m2} {transform.m3}");
 
         overlay.SetOverlayFlag(overlayHandle, VROverlayFlags.EnableControlBar | VROverlayFlags.EnableControlBarClose | VROverlayFlags.VisibleInDashboard, true);
-        overlay.SetOverlayFromFile(overlayHandle, "/home/spacy/Downloads/480964138_990485743182183_2770213490742417694_n.jpg");
-        // overlay.SetOverlayTexture(overlayHandle, ref texture);
-        overlay.ShowOverlay(overlayHandle);
-    }
+        var imagePath = Path.Combine(
+            Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
+                ?? throw new Exception("no entry assembly location"),
+            "testimage.jpg"
+        );
+        if(!File.Exists(imagePath))
+        {
+            throw new FileNotFoundException($"Image file not found: {imagePath}");
+        }
 
-    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        overlay.SetOverlayFromFile(overlayHandle, imagePath);
+    }
 
     private async Task PollEventsTask()
     {
@@ -84,7 +108,7 @@ public class VROverlay {
             eventSize = (uint)sizeof(VREvent_t);
         }
         var token = cancellationTokenSource.Token;
-        token.ThrowIfCancellationRequested();
+
         DateTime lastPulse = DateTime.MinValue;
         while(!token.IsCancellationRequested) {
 
@@ -113,6 +137,18 @@ public class VROverlay {
             else {
                 await Task.Delay(TimeSpan.FromMilliseconds(20), token);
             }
+        }
+    }
+
+    public void Dispose()
+    {
+        overlay.HideOverlay(overlayHandle);
+        cancellationTokenSource.Cancel();
+        cancellationTokenSource.Dispose();
+        
+        if(eventHandlerTask != null)
+        {
+            eventHandlerTask.Wait();
         }
     }
 }
