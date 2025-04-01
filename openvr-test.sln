@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "openvr-test", "openvr-test.csproj", "{CEFCE34A-91DD-29B3-560D-FD58A88CD902}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CEFCE34A-91DD-29B3-560D-FD58A88CD902}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEFCE34A-91DD-29B3-560D-FD58A88CD902}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEFCE34A-91DD-29B3-560D-FD58A88CD902}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEFCE34A-91DD-29B3-560D-FD58A88CD902}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8CB25DEC-046F-4634-98C5-2F11A93A530C}
+	EndGlobalSection
+EndGlobal
