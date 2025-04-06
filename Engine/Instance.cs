@@ -6,6 +6,8 @@ public unsafe partial class Engine {
     private VkInstance instance;
     private VkPhysicalDevice physicalDevice;
     private VkDevice device;
+    private VkQueue graphicsQueue;
+
 
     string[] requiredExtensions = new[]
     {
@@ -46,6 +48,12 @@ public unsafe partial class Engine {
         }
         createInfo.enabledExtensionCount = (uint)requiredExtensions.Length;
         createInfo.ppEnabledExtensionNames = (byte**)extensionsToBytesArray;
+        createInfo.enabledLayerCount = 1;
+        IntPtr* layers = stackalloc IntPtr[1];
+        layers[0] = (nint)"VK_LAYER_KHRONOS_validation".ToPointer();
+        createInfo.ppEnabledLayerNames = (byte**)layers;
+
+        var x = Helpers.GetString((byte*)layers[0]);
 
         // create instance
         VkInstance instance;
@@ -71,12 +79,36 @@ public unsafe partial class Engine {
 
         }
         
-        // create device
+        uint queueFamilyCount = 0;
+        VulkanNative.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, null);
+
+        VkQueueFamilyProperties* queueFamilies = stackalloc VkQueueFamilyProperties[(int)queueFamilyCount];
+        VulkanNative.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies);
+
+        uint graphicsFamilyIndex = 0;
+        for (uint i = 0; i < queueFamilyCount; i++)
+        {
+            if ((queueFamilies[i].queueFlags & VkQueueFlags.VK_QUEUE_GRAPHICS_BIT) != 0)
+            {
+                graphicsFamilyIndex = i;
+                break;
+            }
+        }
+
+        float* queuePriorities = stackalloc float[1];
+        queuePriorities[0] = 1.0f;
+
+        VkDeviceQueueCreateInfo queueCreateInfo;
+        queueCreateInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = graphicsFamilyIndex;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = queuePriorities;
+
         VkDeviceCreateInfo deviceCreateInfo = new VkDeviceCreateInfo
         {
             sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            queueCreateInfoCount = 0,
-            pQueueCreateInfos = null,
+            queueCreateInfoCount = 1,
+            pQueueCreateInfos = &queueCreateInfo,
             enabledExtensionCount = 0,
             ppEnabledExtensionNames = null,
             pEnabledFeatures = null
@@ -84,6 +116,10 @@ public unsafe partial class Engine {
         VkDevice device;
         Helpers.CheckErrors(VulkanNative.vkCreateDevice(physicalDevice, &deviceCreateInfo, null, &device));
         this.device = device;
+
+        VkQueue graphicsQueue;
+        VulkanNative.vkGetDeviceQueue(device, graphicsFamilyIndex, 0, &graphicsQueue);
+        this.graphicsQueue = graphicsQueue;
     }
 
     private IEnumerable<(string extensionName, uint specVersion)> GetAllInstanceExtensions()

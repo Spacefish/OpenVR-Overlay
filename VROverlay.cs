@@ -64,11 +64,11 @@ public class VROverlay : IDisposable
             m_pInstance = engine.Instance.Handle,
             m_pDevice = engine.Device.Handle,
             m_pPhysicalDevice = engine.PhysicalDevice.Handle,
+            m_pQueue = engine.GraphicsQueue.Handle,
             m_nWidth = 512,
             m_nHeight = 512,
             m_nFormat = (uint)EVRRenderModelTextureFormat.RGBA8_SRGB,
             m_nSampleCount = 1,
-            // m_pQueue = engine.GraphicsQueue.Handle,
         };
         unsafe {
             var texture = new Texture_t() {

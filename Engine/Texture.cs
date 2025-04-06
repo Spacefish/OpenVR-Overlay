@@ -34,7 +34,7 @@ public unsafe partial class Engine {
             samples = VkSampleCountFlags.VK_SAMPLE_COUNT_1_BIT,
             tiling = VkImageTiling.VK_IMAGE_TILING_LINEAR,
             usage = VkImageUsageFlags.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
-            sharingMode = VkSharingMode.VK_SHARING_MODE_CONCURRENT,
+            sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
             initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
         };
 
@@ -56,6 +56,7 @@ public unsafe partial class Engine {
         Helpers.CheckErrors(VulkanNative.vkAllocateMemory(device, &allocInfo, null, &textureImageMemory));
 
         Helpers.CheckErrors(VulkanNative.vkBindImageMemory(device, textureImage, textureImageMemory, 0));
+
 
         return textureImage;
     }

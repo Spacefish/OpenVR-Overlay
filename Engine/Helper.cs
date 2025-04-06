@@ -29,6 +29,7 @@ public unsafe static class Helpers
         return System.Text.Encoding.UTF8.GetString(stringStart, characters);
     }
 
+
     [Conditional("DEBUG")]
     public static void CheckErrors(VkResult result)
     {
