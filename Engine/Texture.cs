@@ -1,4 +1,5 @@
 using Evergine.Bindings.Vulkan;
+using Humanizer;
 
 public unsafe partial class Engine {
     private void LoadTexture()
@@ -18,8 +19,10 @@ public unsafe partial class Engine {
         int width = 512; // Replace with actual width
         int height = 512; // Replace with actual height
 
-        // Create a Vulkan image
         VkImage textureImage;
+        VkDeviceMemory textureImageMemory;
+
+        // Create a Vulkan image
         VkImageCreateInfo imageCreateInfo = new VkImageCreateInfo
         {
             sType = VkStructureType.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -40,9 +43,23 @@ public unsafe partial class Engine {
         // get memorry requirements
         VkMemoryRequirements memRequirements;
         VulkanNative.vkGetImageMemoryRequirements(device, textureImage, &memRequirements);
-
-        Console.WriteLine(memRequirements.size);
         
+        Console.WriteLine($"Texture size: {Humanizer.Bytes.ByteSize.FromBytes(memRequirements.size).Humanize()}");;
+        
+        // printMemoryTypes();
+
+        VkMemoryAllocateInfo allocInfo;
+        allocInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT); // find memory type which is GPU local
+
+        Helpers.CheckErrors(VulkanNative.vkAllocateMemory(device, &allocInfo, null, &textureImageMemory));
+
+        Helpers.CheckErrors(VulkanNative.vkBindImageMemory(device, textureImage, textureImageMemory, 0));
+
         return textureImage;
     }
+
+    
+
 }

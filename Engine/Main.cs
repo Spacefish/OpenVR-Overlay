@@ -1,4 +1,11 @@
+using Evergine.Bindings.Vulkan;
+
 public partial class Engine {
+
+    public VkInstance Instance => instance;
+    public VkPhysicalDevice PhysicalDevice => physicalDevice;
+    public VkDevice Device => device;
+    // public VkQueue GraphicsQueue => graphicsQueue;
     public void Init()
     {
         CreateInstance();

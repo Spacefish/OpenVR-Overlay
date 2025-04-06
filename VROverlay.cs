@@ -34,8 +34,10 @@ public class VROverlay : IDisposable
 
         FixOverlayToController();
 
+        Console.WriteLine($"Before load texture");
         LoadOverLayTextureAndSet();
-    
+        
+        Console.WriteLine($"Before Show Overlay");
         overlay.ShowOverlay(overlayHandle);
     }
 
@@ -52,19 +54,33 @@ public class VROverlay : IDisposable
         );
         var vkTexture = engine.LoadTexture(texturePath);
 
-        SetOverlayTexture(vkTexture);
+        SetOverlayTexture(engine, vkTexture);
     }
 
     //todo 
-    private void SetOverlayTexture(VkImage vkTexture) {
-        var texture = new Texture_t() {
-            handle = (nint)vkTexture.Handle,
-            eType = ETextureType.Vulkan,
-            eColorSpace = EColorSpace.Auto
+    private void SetOverlayTexture(Engine engine, VkImage vkTexture) {
+        VRVulkanTextureData_t vulkanTextureDataInfo = new VRVulkanTextureData_t {
+            m_nImage = vkTexture.Handle,
+            m_pInstance = engine.Instance.Handle,
+            m_pDevice = engine.Device.Handle,
+            m_pPhysicalDevice = engine.PhysicalDevice.Handle,
+            m_nWidth = 512,
+            m_nHeight = 512,
+            m_nFormat = (uint)EVRRenderModelTextureFormat.RGBA8_SRGB,
+            m_nSampleCount = 1,
+            // m_pQueue = engine.GraphicsQueue.Handle,
         };
-        var error = overlay.SetOverlayTexture(overlayHandle, ref texture);
-        if(error != EVROverlayError.None) {
-            throw new Exception($"Failed to set overlay texture: {error}");
+        unsafe {
+            var texture = new Texture_t() {
+                handle = (nint)(&vulkanTextureDataInfo),
+                eType = ETextureType.Vulkan,
+                eColorSpace = EColorSpace.Auto
+            };
+            Console.WriteLine($"Texture: {texture.handle} {texture.eType} {texture.eColorSpace}");
+            var error = overlay.SetOverlayTexture(overlayHandle, ref texture);
+            if(error != EVROverlayError.None) {
+                throw new Exception($"Failed to set overlay texture: {error}");
+            }
         }
     }
 

@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Evergine.Bindings.Vulkan" Version="2025.3.1.37" />
+    <PackageReference Include="Humanizer.Core" Version="2.14.1" />
   </ItemGroup>
 
   <ItemGroup>
