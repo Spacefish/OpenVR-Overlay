@@ -10,7 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Evergine.Bindings.Vulkan" Version="2025.3.1.37" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="testimage.jpg" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="test_texture.jpg" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

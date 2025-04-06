@@ -1,0 +1,104 @@
+using System.Runtime.InteropServices;
+using Evergine.Bindings.Vulkan;
+
+public unsafe partial class Engine {
+
+    private VkInstance instance;
+    private VkPhysicalDevice physicalDevice;
+    private VkDevice device;
+
+    string[] requiredExtensions = new[]
+    {
+        "VK_KHR_surface",
+        "VK_KHR_wayland_surface",
+        // "VK_KHR_win32_surface",
+        "VK_EXT_debug_utils",
+    };
+
+    private void CreateInstance() {
+        VkApplicationInfo appInfo = new VkApplicationInfo
+        {
+            sType = VkStructureType.VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            pApplicationName = "Hello Vulkan".ToPointer(),
+            applicationVersion = Helpers.Version(1, 0, 0),
+            pEngineName = "No Engine".ToPointer(),
+            engineVersion = Helpers.Version(1, 0, 0),
+            apiVersion = Helpers.Version(1, 3, 0)
+        };
+
+        VkInstanceCreateInfo createInfo = default;
+        createInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pApplicationInfo = &appInfo;
+
+        var availableExtensions = GetAllInstanceExtensions();
+
+        var missingExtensions = requiredExtensions.Except(availableExtensions.Select(e => e.extensionName))
+            .ToArray();
+
+        if (missingExtensions.Length > 0)
+            throw new InvalidOperationException($"Missing required Vulkan extensions: {string.Join(", ", missingExtensions)}");
+
+        // register extensions we need
+        IntPtr* extensionsToBytesArray = stackalloc IntPtr[requiredExtensions.Length];
+        for (int i = 0; i < requiredExtensions.Length; i++)
+        {
+            extensionsToBytesArray[i] = (nint)requiredExtensions[i].ToPointer();
+        }
+        createInfo.enabledExtensionCount = (uint)requiredExtensions.Length;
+        createInfo.ppEnabledExtensionNames = (byte**)extensionsToBytesArray;
+
+        // create instance
+        VkInstance instance;
+        Helpers.CheckErrors(VulkanNative.vkCreateInstance(&createInfo, null, &instance));
+        this.instance = instance;
+
+        // find physical device
+        uint physicalDeviceCount;
+        Helpers.CheckErrors(VulkanNative.vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, null));
+        VkPhysicalDevice* physicalDevices = stackalloc VkPhysicalDevice[(int)physicalDeviceCount];
+        Helpers.CheckErrors(VulkanNative.vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices));
+        physicalDevice = physicalDevices[0];
+        for(int i = 0; i < physicalDeviceCount; i++)
+        {
+            var deviceProperties = new VkPhysicalDeviceProperties();
+            VulkanNative.vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
+            Console.WriteLine($"Device {i}: {Helpers.GetString(deviceProperties.deviceName)} - {deviceProperties.deviceType}");
+            if (deviceProperties.deviceType == VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+            {
+                physicalDevice = physicalDevices[i];
+                break;
+            }
+
+        }
+        
+        // create device
+        VkDeviceCreateInfo deviceCreateInfo = new VkDeviceCreateInfo
+        {
+            sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+            queueCreateInfoCount = 0,
+            pQueueCreateInfos = null,
+            enabledExtensionCount = 0,
+            ppEnabledExtensionNames = null,
+            pEnabledFeatures = null
+        };
+        VkDevice device;
+        Helpers.CheckErrors(VulkanNative.vkCreateDevice(physicalDevice, &deviceCreateInfo, null, &device));
+        this.device = device;
+    }
+
+    private IEnumerable<(string extensionName, uint specVersion)> GetAllInstanceExtensions()
+    {
+        uint extensionCount;
+        Helpers.CheckErrors(VulkanNative.vkEnumerateInstanceExtensionProperties(null, &extensionCount, null));
+        VkExtensionProperties* extensions = stackalloc VkExtensionProperties[(int)extensionCount];
+        Helpers.CheckErrors(VulkanNative.vkEnumerateInstanceExtensionProperties(null, &extensionCount, extensions));
+
+        var result = new (string extensionName, uint specVersion)[extensionCount];
+        for (int i = 0; i < extensionCount; i++)
+        {
+            result[i].extensionName = Helpers.GetString(extensions[i].extensionName);
+            result[i].specVersion = extensions[i].specVersion;
+        }
+        return result;
+    }
+}

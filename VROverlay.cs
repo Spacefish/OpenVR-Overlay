@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Threading.Tasks;
+using Evergine.Bindings.Vulkan;
 using Valve.VR;
 
 public class VROverlay : IDisposable
@@ -31,21 +32,43 @@ public class VROverlay : IDisposable
 
         eventHandlerTask = Task.Run(PollEventsTask);
 
-        SetTestImageOnController();
+        FixOverlayToController();
+
+        LoadOverLayTextureAndSet();
     
         overlay.ShowOverlay(overlayHandle);
     }
 
-    //todo 
-    private void SetOverlayTexture() {
-        var texture = new Texture_t();
-        texture.handle = IntPtr.Zero;
-        texture.eType = ETextureType.IOSurface;
-        texture.eColorSpace = EColorSpace.Auto;
-        overlay.SetOverlayTexture(overlayHandle, ref texture);
+
+    private void LoadOverLayTextureAndSet() {
+        
+        var engine = new Engine();
+        engine.Init();
+
+        var texturePath = Path.Combine(
+            Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
+                ?? throw new Exception("no entry assembly location"),
+            "test_texture.jpg"
+        );
+        var vkTexture = engine.LoadTexture(texturePath);
+
+        SetOverlayTexture(vkTexture);
     }
 
-    private void SetTestImageOnController()
+    //todo 
+    private void SetOverlayTexture(VkImage vkTexture) {
+        var texture = new Texture_t() {
+            handle = (nint)vkTexture.Handle,
+            eType = ETextureType.Vulkan,
+            eColorSpace = EColorSpace.Auto
+        };
+        var error = overlay.SetOverlayTexture(overlayHandle, ref texture);
+        if(error != EVROverlayError.None) {
+            throw new Exception($"Failed to set overlay texture: {error}");
+        }
+    }
+
+    private void FixOverlayToController()
     {
         uint lastControllerId = uint.MaxValue;;
         for(int i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
@@ -87,6 +110,10 @@ public class VROverlay : IDisposable
         Console.WriteLine($"Last Controller ID: {lastControllerId} Transform: {transform.m0} {transform.m1} {transform.m2} {transform.m3}");
 
         overlay.SetOverlayFlag(overlayHandle, VROverlayFlags.EnableControlBar | VROverlayFlags.EnableControlBarClose | VROverlayFlags.VisibleInDashboard, true);
+    }
+
+    private void SetTestImageAsOverlay()
+    {
         var imagePath = Path.Combine(
             Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
                 ?? throw new Exception("no entry assembly location"),
