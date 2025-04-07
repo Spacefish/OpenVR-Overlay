@@ -15,6 +15,7 @@ public unsafe partial class Engine {
         "VK_KHR_wayland_surface",
         // "VK_KHR_win32_surface",
         "VK_EXT_debug_utils",
+        "VK_KHR_external_memory_capabilities"
     };
 
     private void CreateInstance() {
@@ -104,13 +105,27 @@ public unsafe partial class Engine {
         queueCreateInfo.queueCount = 1;
         queueCreateInfo.pQueuePriorities = queuePriorities;
 
+        string[] requiredDeviceExtensions = [
+            "VK_KHR_external_semaphore",
+            "VK_KHR_external_semaphore_fd",
+            "VK_KHR_external_memory",
+            "VK_KHR_external_memory_fd",
+            "VK_KHR_get_memory_requirements2"
+        ];
+
+        IntPtr* deviceExtensions = stackalloc IntPtr[requiredDeviceExtensions.Length];
+        for (int i = 0; i < requiredDeviceExtensions.Length; i++)
+        {
+            deviceExtensions[i] = (nint)requiredDeviceExtensions[i].ToPointer();
+        }
+
         VkDeviceCreateInfo deviceCreateInfo = new VkDeviceCreateInfo
         {
             sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
             queueCreateInfoCount = 1,
             pQueueCreateInfos = &queueCreateInfo,
-            enabledExtensionCount = 0,
-            ppEnabledExtensionNames = null,
+            enabledExtensionCount = (uint)requiredDeviceExtensions.Length,
+            ppEnabledExtensionNames = (byte**)deviceExtensions,
             pEnabledFeatures = null
         };
         VkDevice device;

@@ -22,6 +22,12 @@ public unsafe partial class Engine {
         VkImage textureImage;
         VkDeviceMemory textureImageMemory;
 
+        VkExternalMemoryImageCreateInfo externalMemoryImageCreateInfo = new VkExternalMemoryImageCreateInfo
+        {
+            sType = VkStructureType.VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
+            handleTypes = VkExternalMemoryHandleTypeFlags.VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT
+        };
+
         // Create a Vulkan image
         VkImageCreateInfo imageCreateInfo = new VkImageCreateInfo
         {
@@ -35,7 +41,8 @@ public unsafe partial class Engine {
             tiling = VkImageTiling.VK_IMAGE_TILING_LINEAR,
             usage = VkImageUsageFlags.VK_IMAGE_USAGE_TRANSFER_DST_BIT | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT,
             sharingMode = VkSharingMode.VK_SHARING_MODE_EXCLUSIVE,
-            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED
+            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            pNext = &externalMemoryImageCreateInfo
         };
 
         Helpers.CheckErrors(VulkanNative.vkCreateImage(device, &imageCreateInfo, null, &textureImage));
@@ -48,10 +55,17 @@ public unsafe partial class Engine {
         
         // printMemoryTypes();
 
+        VkExportMemoryAllocateInfo externalMemoryAllocateInfo = new VkExportMemoryAllocateInfo
+        {
+            sType = VkStructureType.VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
+            handleTypes = VkExternalMemoryHandleTypeFlags.VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT
+        };
+
         VkMemoryAllocateInfo allocInfo;
         allocInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
         allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT); // find memory type which is GPU local
+        allocInfo.pNext = &externalMemoryAllocateInfo;
 
         Helpers.CheckErrors(VulkanNative.vkAllocateMemory(device, &allocInfo, null, &textureImageMemory));
 

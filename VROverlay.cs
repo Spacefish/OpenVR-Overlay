@@ -74,7 +74,7 @@ public class VROverlay : IDisposable
             var texture = new Texture_t() {
                 handle = (nint)(&vulkanTextureDataInfo),
                 eType = ETextureType.Vulkan,
-                eColorSpace = EColorSpace.Auto
+                eColorSpace = EColorSpace.Auto,
             };
             Console.WriteLine($"Texture: {texture.handle} {texture.eType} {texture.eColorSpace}");
             var error = overlay.SetOverlayTexture(overlayHandle, ref texture);
