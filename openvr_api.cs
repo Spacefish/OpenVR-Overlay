@@ -6223,16 +6223,16 @@ public enum EBlockQueueCreationFlag
 }
 [StructLayout(LayoutKind.Sequential)] public struct VRVulkanTextureData_t
 {
-	public ulong m_nImage;
-	public IntPtr m_pDevice; // struct VkDevice_T *
-	public IntPtr m_pPhysicalDevice; // struct VkPhysicalDevice_T *
-	public IntPtr m_pInstance; // struct VkInstance_T *
-	public IntPtr m_pQueue; // struct VkQueue_T *
-	public uint m_nQueueFamilyIndex;
-	public uint m_nWidth;
-	public uint m_nHeight;
-	public uint m_nFormat;
-	public uint m_nSampleCount;
+	public ulong m_nImage; // 0x00
+	public IntPtr m_pDevice; // struct VkDevice_T * // 0x08
+	public IntPtr m_pPhysicalDevice; // struct VkPhysicalDevice_T * // 0x10
+	public IntPtr m_pInstance; // struct VkInstance_T * // 0x18
+	public IntPtr m_pQueue; // struct VkQueue_T * // 0x20
+	public uint m_nQueueFamilyIndex; // 0x28
+	public uint m_nWidth; // 0x2C
+	public uint m_nHeight; // 0x30
+	public uint m_nFormat; // 0x34
+	public uint m_nSampleCount; // 0x38
 }
 [StructLayout(LayoutKind.Sequential)] public struct VRVulkanTextureArrayData_t
 {

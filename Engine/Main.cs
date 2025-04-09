@@ -6,6 +6,7 @@ public partial class Engine {
     public VkPhysicalDevice PhysicalDevice => physicalDevice;
     public VkDevice Device => device;
     public VkQueue GraphicsQueue => graphicsQueue;
+    public uint GraphicsQueueFamilyIndex => graphicsQueueFamilyIndex;
     public void Init()
     {
         CreateInstance();

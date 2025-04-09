@@ -57,26 +57,34 @@ public class VROverlay : IDisposable
         SetOverlayTexture(engine, vkTexture);
     }
 
-    //todo 
     private void SetOverlayTexture(Engine engine, VkImage vkTexture) {
         VRVulkanTextureData_t vulkanTextureDataInfo = new VRVulkanTextureData_t {
-            m_nImage = vkTexture.Handle,
-            m_pInstance = engine.Instance.Handle,
-            m_pDevice = engine.Device.Handle,
-            m_pPhysicalDevice = engine.PhysicalDevice.Handle,
-            m_pQueue = engine.GraphicsQueue.Handle,
-            m_nWidth = 512,
-            m_nHeight = 512,
-            m_nFormat = (uint)EVRRenderModelTextureFormat.RGBA8_SRGB,
-            m_nSampleCount = 1,
+            m_nImage = vkTexture.Handle, // 0x00
+            m_pDevice = engine.Device.Handle, // 0x08
+            m_pPhysicalDevice = engine.PhysicalDevice.Handle, // 0x10
+            m_pInstance = engine.Instance.Handle, // 0x18
+            m_pQueue = engine.GraphicsQueue.Handle, // 0x20
+            m_nQueueFamilyIndex = engine.GraphicsQueueFamilyIndex, // 0x28
+            m_nWidth = 512, // 0x2C
+            m_nHeight = 512, // 0x30
+            m_nFormat = (uint)EVRRenderModelTextureFormat.RGBA8_SRGB, // 0x34
+            m_nSampleCount = 1, // 0x38
         };
+        unsafe {
+            Console.WriteLine($"nint: {sizeof(nint)} uint: {sizeof(uint)} ulong: {sizeof(ulong)}");
+            var structSize = sizeof(VRVulkanTextureData_t);
+            Console.WriteLine($"Struct size: {structSize}");
+        }
         unsafe {
             var texture = new Texture_t() {
                 handle = (nint)(&vulkanTextureDataInfo),
                 eType = ETextureType.Vulkan,
-                eColorSpace = EColorSpace.Auto,
+                eColorSpace = EColorSpace.Linear,
             };
             Console.WriteLine($"Texture: {texture.handle} {texture.eType} {texture.eColorSpace}");
+
+            // CVROverlayLatest::SetOverlayTextureXR
+
             var error = overlay.SetOverlayTexture(overlayHandle, ref texture);
             if(error != EVROverlayError.None) {
                 throw new Exception($"Failed to set overlay texture: {error}");

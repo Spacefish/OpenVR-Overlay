@@ -8,6 +8,8 @@ public unsafe partial class Engine {
     private VkDevice device;
     private VkQueue graphicsQueue;
 
+    private uint graphicsQueueFamilyIndex = 0;
+
 
     string[] requiredExtensions = new[]
     {
@@ -86,12 +88,11 @@ public unsafe partial class Engine {
         VkQueueFamilyProperties* queueFamilies = stackalloc VkQueueFamilyProperties[(int)queueFamilyCount];
         VulkanNative.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies);
 
-        uint graphicsFamilyIndex = 0;
         for (uint i = 0; i < queueFamilyCount; i++)
         {
             if ((queueFamilies[i].queueFlags & VkQueueFlags.VK_QUEUE_GRAPHICS_BIT) != 0)
             {
-                graphicsFamilyIndex = i;
+                graphicsQueueFamilyIndex = i;
                 break;
             }
         }
@@ -101,7 +102,7 @@ public unsafe partial class Engine {
 
         VkDeviceQueueCreateInfo queueCreateInfo;
         queueCreateInfo.sType = VkStructureType.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = graphicsFamilyIndex;
+        queueCreateInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
         queueCreateInfo.queueCount = 1;
         queueCreateInfo.pQueuePriorities = queuePriorities;
 
@@ -133,7 +134,7 @@ public unsafe partial class Engine {
         this.device = device;
 
         VkQueue graphicsQueue;
-        VulkanNative.vkGetDeviceQueue(device, graphicsFamilyIndex, 0, &graphicsQueue);
+        VulkanNative.vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &graphicsQueue);
         this.graphicsQueue = graphicsQueue;
     }
 
